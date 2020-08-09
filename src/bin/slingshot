@@ -37,7 +37,7 @@ import math
 import os
 import sys
 import time
-import thread
+import _thread
 
 from random import randint
 
@@ -210,7 +210,7 @@ class Game:
 
         self.started = False
 
-        self.lock = thread.allocate_lock()
+        self.lock = _thread.allocate_lock()
 
         self.game_init()
 
@@ -271,6 +271,8 @@ class Game:
             planetlist = None
         else:
             packet = self.client_round_init()
+            if not packet:
+                return
             planetlist = packet[0]
             y_coordlist = packet[1]
 
@@ -294,7 +296,7 @@ class Game:
             self.player = 2
 
         if self.net_play() and not self.active_net_player():
-            thread.start_new_thread(self.thread_job, ())
+            _thread.start_new_thread(self.thread_job, ())
 
         self.show_round = 100
         if Settings.INVISIBLE:
@@ -352,7 +354,7 @@ class Game:
                 nn = n / 2
             else:
                 nn = n
-            for i in xrange(nn):
+            for i in range(nn):
                 self.particlesystem.add(Particle(pos, size))
 
     def create_planets(self, planetlist=None):
@@ -361,13 +363,13 @@ class Game:
         if planetlist is None:
             if Settings.MAX_BLACKHOLES > 0:
                 n = randint(1, Settings.MAX_BLACKHOLES)
-                for i in xrange(n):
+                for i in range(n):
                     result.add(Blackhole(result, self.background))
             else:
                 # Only have planets if we don't have any
                 # blackholes.
                 n = randint(2, Settings.MAX_PLANETS)
-                for i in xrange(n):
+                for i in range(n):
                     result.add(Planet(result, self.background))
         else:
             for p in planetlist:
@@ -414,7 +416,7 @@ class Game:
         zoom_screen.blit(normal_screen, (200, 150))
 
         missilesprite = self.missile.get_image()
-        missilesprite = pygame.transform.scale(missilesprite, (missilesprite.get_size()[0] / 3, missilesprite.get_size()[1] / 3))
+        missilesprite = pygame.transform.scale(missilesprite, (int(missilesprite.get_size()[0] / 3), int(missilesprite.get_size()[1] / 3)))
         pos = self.missile.get_pos()
         pos = (200 + pos[0] / 4 - missilesprite.get_width() / 2, 150 + pos[1] / 4 - missilesprite.get_height() / 2)
         zoom_screen.blit(missilesprite, pos)
@@ -625,7 +627,7 @@ class Game:
             self.menu = self.net_menu
         elif c == "Host a game":
             self.menu = self.net_host_menu
-            thread.start_new_thread(self.host_game_init, ())
+            _thread.start_new_thread(self.host_game_init, ())
         elif c == "Connect to a host":
             in_box = Inputbox(self.screen, "Hostname")
             hostname = in_box.ask()
@@ -669,7 +671,7 @@ class Game:
                 self.end_shot()
 
                 if self.net_play() and not self.active_net_player():
-                    thread.start_new_thread(self.thread_job, ())
+                    _thread.start_new_thread(self.thread_job, ())
 
         if self.menu is not None:
             self.menu_action()
@@ -698,7 +700,7 @@ class Game:
             offset1 = 0
 
         power_penalty = self.missile.get_score()
-        for i in xrange(1, 3):
+        for i in range(1, 3):
             if self.players[i].shot:
                 if self.player == 3 - i:
                     message = "Player %d killed self" % (i)
@@ -939,7 +941,7 @@ class Game:
         if not os.path.exists(path):
             os.mkdir(path)
         path += "/settings"
-        f = file(path, 'wt')
+        f = open(path, 'wt')
         if self.bounce:
             f.write("Bounce: 1\n")
         else:
@@ -1092,11 +1094,11 @@ class Game:
             self.net.close()
         return ret
 
-        def use_fullscreen(self):
-                pygame.display.set_mode((0, 0), pygame.FULLSCREEN | pygame.NOFRAME)
+    def use_fullscreen(self):
+        pygame.display.set_mode((0, 0), pygame.FULLSCREEN | pygame.NOFRAME)
 
-        def use_window(self):
-                pygame.display.set_mode((800, 600))
+    def use_window(self):
+        pygame.display.set_mode((800, 600))
 
 
 def main():
